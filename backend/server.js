@@ -16,13 +16,21 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 /* ---------------- CORS CONFIG ---------------- */
+const allowedOrigins = [
+  'http://localhost:3002',
+  'http://localhost:5173',
+  'https://creditwiser.netlify.app'
+];
+
 app.use(
   cors({
-    origin: [
-      'http://localhost:3002',
-      'http://localhost:5173',
-      'https://creditwiser.netlify.app/' // replace later
-    ],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS not allowed'));
+      }
+    },
     credentials: true
   })
 );

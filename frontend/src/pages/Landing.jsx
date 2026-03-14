@@ -305,6 +305,7 @@ export default function Landing() {
           </div>
           <div className="footer-bottom">
             <p>© 2024 CreditWise. All rights reserved.</p>
+            <p>Built by <b>Aman Thakur</b> with <span style={{ color: 'var(--color-accent-pink)' }}>👌</span></p>
             <p>⚠️ Educational tool only — not a substitute for official credit reports.</p>
           </div>
         </div>

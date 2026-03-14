@@ -11,62 +11,94 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 
-// Security middleware
+/* ---------------- SECURITY MIDDLEWARE ---------------- */
 app.use(helmet());
 app.use(morgan('dev'));
 
-// CORS configuration
-app.use(cors({
-  origin: ['http://localhost:3002', 'http://localhost:5173'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+/* ---------------- CORS CONFIG ---------------- */
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3002',
+      'http://localhost:5173',
+      'https://creditwiser.netlify.app/' // replace later
+    ],
+    credentials: true
+  })
+);
 
-// Body parsing middleware
+/* ---------------- BODY PARSING ---------------- */
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+/* ---------------- ROOT ROUTE ---------------- */
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'CreditWise API',
+    message: 'Server is running 🚀'
+  });
+});
+
+/* ---------------- HEALTH CHECK ---------------- */
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'CreditWise API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+/* ---------------- API ROUTES ---------------- */
 app.use('/api/auth', authRoutes);
 app.use('/api/credit', creditRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'CreditWise API is running', timestamp: new Date().toISOString() });
-});
-
-// Global error handler
+/* ---------------- GLOBAL ERROR HANDLER ---------------- */
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('❌ Error:', err.stack);
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error'
   });
 });
 
-// 404 handler
+/* ---------------- 404 HANDLER ---------------- */
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
 
-// Connect to MongoDB and start server
-const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/creditwise';
+/* ---------------- DATABASE CONNECTION ---------------- */
 
-mongoose.connect(MONGODB_URI)
+const PORT = process.env.PORT || 5000;
+const MONGODB_URI =
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/creditwise';
+
+mongoose
+  .connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
   .then(() => {
     console.log('✅ Connected to MongoDB');
+
     app.listen(PORT, () => {
-      console.log(`🚀 CreditWise Backend running on http://localhost:${PORT}`);
+      console.log(`🚀 CreditWise Backend running on port ${PORT}`);
     });
   })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
-    console.log('⚠️  Starting server without MongoDB connection...');
+  .catch((err) => {
+    console.error('❌ MongoDB connection failed:', err.message);
+
+    console.log('⚠️ Starting server without database connection...');
+
     app.listen(PORT, () => {
-      console.log(`🚀 CreditWise Backend running on http://localhost:${PORT} (no DB)`);
+      console.log(
+        `🚀 CreditWise Backend running on port ${PORT} (no database)`
+      );
     });
   });
 
